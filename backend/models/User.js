@@ -11,8 +11,14 @@ const UserSchema = new mongoose.Schema({
     unique: true,
   },
   faceDescriptor: {
-    type: [Number],
-    required: true,
+    iv: {
+      type: String,
+      required: true,
+    },
+    data: {
+      type: String,
+      required: true,
+    },
   },
 });
 
