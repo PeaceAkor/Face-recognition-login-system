@@ -9,10 +9,15 @@ export default function LandingPage() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
 
-    const particles = Array.from({ length: 60 }, () => ({
+    const resize = () => {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const particles = Array.from({ length: 50 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
       r: Math.random() * 1.5 + 0.5,
@@ -49,15 +54,19 @@ export default function LandingPage() {
       animId = requestAnimationFrame(draw);
     };
     draw();
-    return () => cancelAnimationFrame(animId);
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", resize);
+    };
   }, []);
 
   return (
     <div style={styles.root}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #030712; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { background: #030712; overflow-x: hidden; }
 
         .btn-primary {
           background: linear-gradient(135deg, #0ea5e9, #6366f1);
@@ -72,6 +81,7 @@ export default function LandingPage() {
           transition: all 0.3s;
           box-shadow: 0 0 24px rgba(14,165,233,0.35);
           letter-spacing: 0.3px;
+          white-space: nowrap;
         }
         .btn-primary:hover {
           transform: translateY(-2px);
@@ -89,6 +99,7 @@ export default function LandingPage() {
           cursor: pointer;
           transition: all 0.3s;
           backdrop-filter: blur(8px);
+          white-space: nowrap;
         }
         .btn-ghost:hover {
           border-color: rgba(14,165,233,0.5);
@@ -111,21 +122,16 @@ export default function LandingPage() {
           box-shadow: 0 20px 60px rgba(14,165,233,0.1);
         }
 
-        .scan-line {
-          animation: scanMove 3s ease-in-out infinite;
-        }
+        .scan-line { animation: scanMove 3s ease-in-out infinite; }
         @keyframes scanMove {
           0%, 100% { transform: translateY(0); opacity: 1; }
           50% { transform: translateY(120px); opacity: 0.4; }
         }
 
-        .pulse-ring {
-          animation: pulseRing 2s ease-out infinite;
-        }
-        @keyframes pulseRing {
-          0% { transform: scale(0.95); opacity: 0.8; }
-          50% { transform: scale(1.05); opacity: 0.3; }
-          100% { transform: scale(0.95); opacity: 0.8; }
+        .pulse-dot { animation: pulseDot 2s ease-out infinite; }
+        @keyframes pulseDot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(1.3); }
         }
 
         .fade-in { animation: fadeUp 0.8s ease forwards; opacity: 0; }
@@ -154,34 +160,65 @@ export default function LandingPage() {
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
         }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+          .hero-layout {
+            flex-direction: column !important;
+            gap: 48px !important;
+            padding: 60px 20px 60px !important;
+            text-align: center;
+          }
+          .hero-title { font-size: 42px !important; }
+          .hero-sub { max-width: 100% !important; margin-left: auto; margin-right: auto; }
+          .hero-ctas { justify-content: center !important; }
+          .check-item { justify-content: center; }
+          .hero-right { min-height: 320px !important; width: 100%; }
+          .float-card-1 { right: 0 !important; top: 10px !important; }
+          .float-card-2 { left: 0 !important; bottom: 10px !important; }
+          .features-section { padding: 40px 20px 80px !important; }
+          .features-title { font-size: 28px !important; }
+        }
+
+        @media (max-width: 600px) {
+          .nav-inner { padding: 14px 16px !important; }
+          .nav-logo { font-size: 16px !important; }
+          .nav-btns button { padding: 8px 14px !important; font-size: 13px !important; }
+          .hero-layout { padding: 48px 16px 48px !important; gap: 36px !important; }
+          .hero-badge { font-size: 10px !important; padding: 5px 12px !important; }
+          .hero-title { font-size: 34px !important; letter-spacing: -0.5px !important; }
+          .hero-sub { font-size: 14px !important; }
+          .btn-primary, .btn-ghost { padding: 12px 22px !important; font-size: 14px !important; }
+          .biometric-frame { width: 220px !important; height: 260px !important; }
+          .feature-card { padding: 24px 20px !important; }
+          .features-grid { grid-template-columns: 1fr !important; }
+          .float-card-1, .float-card-2 { display: none !important; }
+        }
       `}</style>
 
-      {/* Canvas BG */}
       <canvas ref={canvasRef} style={styles.canvas} />
-
-      {/* Glow orbs */}
       <div style={styles.orb1} />
       <div style={styles.orb2} />
 
       {/* Navbar */}
       <nav style={styles.nav}>
-        <div style={styles.navInner}>
-          <span style={styles.logo}>
+        <div className="nav-inner" style={styles.navInner}>
+          <span className="nav-logo" style={styles.logo}>
             <span style={styles.logoDot} />
             SchoolPortal
           </span>
-          <div style={{ display: "flex", gap: 12 }}>
+          <div className="nav-btns" style={{ display: "flex", gap: 10 }}>
             <button
               className="btn-ghost"
               onClick={() => navigate("/login")}
-              style={{ padding: "10px 22px", fontSize: 14 }}
+              style={{ padding: "10px 18px", fontSize: 14 }}
             >
               Login
             </button>
             <button
               className="btn-primary"
               onClick={() => navigate("/register")}
-              style={{ padding: "10px 22px", fontSize: 14 }}
+              style={{ padding: "10px 18px", fontSize: 14 }}
             >
               Register
             </button>
@@ -190,14 +227,14 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section style={styles.hero}>
+      <section className="hero-layout" style={styles.hero}>
         <div style={styles.heroLeft}>
-          <div className="fade-in" style={styles.badge}>
-            <span style={styles.badgeDot} />
+          <div className="fade-in hero-badge" style={styles.badge}>
+            <span className="pulse-dot" style={styles.badgeDot} />
             Biometric Authentication System
           </div>
 
-          <h1 className="fade-in" style={styles.heroTitle}>
+          <h1 className="fade-in hero-title" style={styles.heroTitle}>
             Face-Login
             <br />
             <span style={styles.heroAccent}>Biometric</span>
@@ -205,55 +242,43 @@ export default function LandingPage() {
             System
           </h1>
 
-          <p className="fade-in" style={styles.heroSub}>
+          <p className="fade-in hero-sub" style={styles.heroSub}>
             Most school portals still rely on password-based authentication. Our
             modern biometric system delivers a secure, frictionless login
             experience that sets your platform apart.
           </p>
 
-          <div className="fade-in" style={{ marginBottom: 32 }}>
-            <div className="check-item">
-              <div className="check-dot">
-                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                  <path
-                    d="M1 4L3.5 6.5L9 1"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
+          <div className="fade-in">
+            {[
+              "90% more secure login experience",
+              "Real-time face recognition & encryption",
+              "Responsive & blazing fast UI",
+            ].map((text) => (
+              <div className="check-item" key={text}>
+                <div className="check-dot">
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path
+                      d="M1 4L3.5 6.5L9 1"
+                      stroke="white"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+                {text}
               </div>
-              90% more secure login experience
-            </div>
-            <div className="check-item">
-              <div className="check-dot">
-                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                  <path
-                    d="M1 4L3.5 6.5L9 1"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </div>
-              Real-time face recognition & encryption
-            </div>
-            <div className="check-item">
-              <div className="check-dot">
-                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                  <path
-                    d="M1 4L3.5 6.5L9 1"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </div>
-              Responsive & blazing fast UI
-            </div>
+            ))}
           </div>
 
-          <div className="fade-in" style={{ display: "flex", gap: 14 }}>
+          <div
+            className="fade-in hero-ctas"
+            style={{
+              display: "flex",
+              gap: 14,
+              marginTop: 32,
+              flexWrap: "wrap",
+            }}
+          >
             <button
               className="btn-primary"
               onClick={() => navigate("/register")}
@@ -267,14 +292,11 @@ export default function LandingPage() {
         </div>
 
         {/* Biometric Visual */}
-        <div style={styles.heroRight}>
-          <div style={styles.biometricFrame}>
-            {/* Corner brackets */}
+        <div className="hero-right" style={styles.heroRight}>
+          <div className="biometric-frame" style={styles.biometricFrame}>
             {["topLeft", "topRight", "bottomLeft", "bottomRight"].map((pos) => (
               <div key={pos} style={{ ...styles.corner, ...styles[pos] }} />
             ))}
-
-            {/* Face outline SVG */}
             <svg
               width="180"
               height="200"
@@ -282,7 +304,6 @@ export default function LandingPage() {
               fill="none"
               style={{ position: "relative", zIndex: 2 }}
             >
-              {/* Head outline */}
               <ellipse
                 cx="90"
                 cy="95"
@@ -292,7 +313,6 @@ export default function LandingPage() {
                 strokeWidth="1"
                 strokeDasharray="4 3"
               />
-              {/* Eyes */}
               <ellipse
                 cx="65"
                 cy="80"
@@ -311,7 +331,6 @@ export default function LandingPage() {
               />
               <circle cx="65" cy="80" r="4" fill="#38bdf8" opacity="0.6" />
               <circle cx="115" cy="80" r="4" fill="#38bdf8" opacity="0.6" />
-              {/* Nose */}
               <path
                 d="M90 90 L83 108 Q90 113 97 108 Z"
                 stroke="#38bdf8"
@@ -319,7 +338,6 @@ export default function LandingPage() {
                 fill="none"
                 opacity="0.5"
               />
-              {/* Mouth */}
               <path
                 d="M72 125 Q90 138 108 125"
                 stroke="#38bdf8"
@@ -327,7 +345,6 @@ export default function LandingPage() {
                 fill="none"
                 strokeLinecap="round"
               />
-              {/* Scan grid dots */}
               {[60, 90, 120].map((x) =>
                 [60, 90, 120, 150].map((y) => (
                   <circle
@@ -339,7 +356,6 @@ export default function LandingPage() {
                   />
                 )),
               )}
-              {/* Mesh lines */}
               <line
                 x1="25"
                 y1="95"
@@ -357,13 +373,9 @@ export default function LandingPage() {
                 strokeWidth="0.5"
               />
             </svg>
-
-            {/* Scan line */}
             <div className="scan-line" style={styles.scanLine} />
-
-            {/* Status */}
             <div style={styles.scanStatus}>
-              <div style={styles.scanDot} />
+              <div className="pulse-dot" style={styles.scanDot} />
               <span
                 style={{
                   color: "#38bdf8",
@@ -377,8 +389,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Floating stat cards */}
-          <div style={styles.floatCard1}>
+          <div className="float-card-1" style={styles.floatCard1}>
             <div
               style={{
                 color: "#38bdf8",
@@ -399,7 +410,7 @@ export default function LandingPage() {
               Recognition Rate
             </div>
           </div>
-          <div style={styles.floatCard2}>
+          <div className="float-card-2" style={styles.floatCard2}>
             <div
               style={{
                 color: "#a78bfa",
@@ -424,10 +435,12 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section style={styles.features}>
+      <section className="features-section" style={styles.features}>
         <p style={styles.featuresLabel}>KEY FEATURES</p>
-        <h2 style={styles.featuresTitle}>Why choose our system?</h2>
-        <div style={styles.featureGrid}>
+        <h2 className="features-title" style={styles.featuresTitle}>
+          Why choose our system?
+        </h2>
+        <div className="features-grid" style={styles.featureGrid}>
           {[
             {
               icon: "🔬",
@@ -550,6 +563,7 @@ const styles = {
     borderRadius: "50%",
     background: "linear-gradient(135deg, #0ea5e9, #6366f1)",
     boxShadow: "0 0 10px rgba(14,165,233,0.8)",
+    flexShrink: 0,
   },
   hero: {
     position: "relative",
@@ -561,9 +575,7 @@ const styles = {
     alignItems: "center",
     gap: 80,
   },
-  heroLeft: {
-    flex: 1,
-  },
+  heroLeft: { flex: 1, minWidth: 0 },
   badge: {
     display: "inline-flex",
     alignItems: "center",
@@ -584,7 +596,7 @@ const styles = {
     borderRadius: "50%",
     background: "#38bdf8",
     boxShadow: "0 0 6px #38bdf8",
-    animation: "pulseRing 2s infinite",
+    flexShrink: 0,
   },
   heroTitle: {
     fontFamily: "'Syne', sans-serif",

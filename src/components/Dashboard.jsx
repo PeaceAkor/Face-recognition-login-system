@@ -101,12 +101,12 @@ export default function Dashboard() {
       '{"fullName":"Amaka Osei","matricNumber":"CSC/2021/042"}',
   );
   const [hovered, setHovered] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const logout = () => {
     localStorage.removeItem("user");
     navigate("/login");
   };
-
   const initials = user?.fullName
     ? user.fullName
         .split(" ")
@@ -114,7 +114,6 @@ export default function Dashboard() {
         .join("")
         .slice(0, 2)
     : "ST";
-
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -123,77 +122,94 @@ export default function Dashboard() {
     <div style={styles.root}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         .dash-card {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 20px;
-          padding: 28px;
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-          position: relative;
-          overflow: hidden;
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 20px; padding: 28px; cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden;
         }
-        .dash-card::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 20px;
-          opacity: 0;
-          transition: opacity 0.3s;
-          background: var(--card-glow);
-        }
+        .dash-card::before { content: ''; position: absolute; inset: 0; border-radius: 20px; opacity: 0; transition: opacity 0.3s; background: var(--card-glow); }
         .dash-card:hover { transform: translateY(-5px); border-color: var(--card-color); }
         .dash-card:hover::before { opacity: 1; }
 
         .logout-btn {
-          background: transparent;
-          border: 1px solid rgba(239,68,68,0.3);
-          color: #f87171;
-          padding: 9px 20px;
-          border-radius: 10px;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 14px;
-          cursor: pointer;
-          transition: all 0.2s;
-          display: flex;
-          align-items: center;
-          gap: 8px;
+          background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #f87171;
+          padding: 9px 20px; border-radius: 10px; font-family: 'DM Sans', sans-serif;
+          font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px;
         }
-        .logout-btn:hover {
-          background: rgba(239,68,68,0.1);
-          border-color: rgba(239,68,68,0.6);
-        }
+        .logout-btn:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.6); }
 
         .activity-item {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          padding: 14px 0;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-          transition: all 0.2s;
+          display: flex; align-items: center; gap: 14px; padding: 14px 0;
+          border-bottom: 1px solid rgba(255,255,255,0.05); transition: all 0.2s;
         }
         .activity-item:last-child { border-bottom: none; }
         .activity-item:hover { padding-left: 6px; }
 
         .stat-card {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 16px;
-          padding: 20px 24px;
-          text-align: center;
-          flex: 1;
+          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 16px; padding: 16px 20px; text-align: center; flex: 1; min-width: 0;
+        }
+
+        .hamburger-btn {
+          display: none; background: none; border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 10px; padding: 8px; cursor: pointer; color: #94a3b8; align-items: center; justify-content: center;
+        }
+
+        @keyframes pulseGreen { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .live-dot { animation: pulseGreen 2s infinite; }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+          .hamburger-btn { display: flex !important; }
+          .dash-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+          }
+          .dash-sidebar.open { transform: translateX(0) !important; }
+          .sidebar-overlay { display: block !important; }
+          .dash-main { margin-left: 0 !important; padding: 20px 16px !important; }
+          .dash-header { flex-wrap: wrap; gap: 12px; }
+          .dash-header-right { flex-wrap: wrap; }
+          .stats-row { flex-direction: column !important; gap: 10px !important; }
+          .stat-card { padding: 12px 16px !important; }
+          .welcome-card { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; padding: 18px !important; }
+          .card-grid { grid-template-columns: 1fr !important; }
+          .greeting-name { font-size: 20px !important; }
+          .logout-btn { padding: 8px 14px !important; font-size: 13px !important; }
+          .session-badge { display: none !important; }
+        }
+
+        @media (max-width: 400px) {
+          .dash-main { padding: 16px 12px !important; }
+          .dash-card { padding: 20px 16px !important; }
         }
       `}</style>
 
+      {/* Sidebar overlay for mobile */}
+      <div
+        className="sidebar-overlay"
+        onClick={() => setSidebarOpen(false)}
+        style={{
+          display: "none",
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.6)",
+          zIndex: 19,
+          backdropFilter: "blur(4px)",
+        }}
+      />
+
       {/* Sidebar */}
-      <aside style={styles.sidebar}>
+      <aside
+        className={`dash-sidebar${sidebarOpen ? " open" : ""}`}
+        style={styles.sidebar}
+      >
         <div style={styles.sidebarLogo}>
           <div style={styles.logoDot} />
           <span style={styles.logoText}>SchoolPortal</span>
         </div>
-
         <nav style={styles.sideNav}>
           {cards.map((c) => (
             <div
@@ -214,7 +230,6 @@ export default function Dashboard() {
             </div>
           ))}
         </nav>
-
         <div style={styles.sidebarUser}>
           <div style={styles.avatarSmall}>{initials}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -269,16 +284,41 @@ export default function Dashboard() {
       </aside>
 
       {/* Main */}
-      <main style={styles.main}>
+      <main className="dash-main" style={styles.main}>
         {/* Header */}
-        <header style={styles.header}>
-          <div>
-            <p style={styles.greetingSmall}>{greeting} 👋</p>
-            <h1 style={styles.greetingName}>{user?.fullName}</h1>
+        <header className="dash-header" style={styles.header}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <button
+              className="hamburger-btn"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+            <div>
+              <p style={styles.greetingSmall}>{greeting} 👋</p>
+              <h1 className="greeting-name" style={styles.greetingName}>
+                {user?.fullName}
+              </h1>
+            </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={styles.sessionBadge}>
-              <div style={styles.liveIndicator} />
+          <div
+            className="dash-header-right"
+            style={{ display: "flex", alignItems: "center", gap: 12 }}
+          >
+            <div className="session-badge" style={styles.sessionBadge}>
+              <div className="live-dot" style={styles.liveIndicator} />
               Session Active
             </div>
             <button className="logout-btn" onClick={logout}>
@@ -301,7 +341,7 @@ export default function Dashboard() {
         </header>
 
         {/* Welcome Card */}
-        <div style={styles.welcomeCard}>
+        <div className="welcome-card" style={styles.welcomeCard}>
           <div style={styles.welcomeLeft}>
             <div style={styles.avatar}>{initials}</div>
             <div>
@@ -344,8 +384,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats row */}
-        <div style={{ display: "flex", gap: 16, marginBottom: 28 }}>
+        {/* Stats */}
+        <div
+          className="stats-row"
+          style={{ display: "flex", gap: 16, marginBottom: 28 }}
+        >
           {[
             { label: "Current Semester", value: "2nd Semester" },
             { label: "Registered Courses", value: "6 Courses" },
@@ -367,7 +410,7 @@ export default function Dashboard() {
               <div
                 style={{
                   color: "#e2e8f0",
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: 700,
                   fontFamily: "'Syne', sans-serif",
                 }}
@@ -379,7 +422,7 @@ export default function Dashboard() {
         </div>
 
         {/* Dashboard Cards */}
-        <div style={styles.cardGrid}>
+        <div className="card-grid" style={styles.cardGrid}>
           {cards.map((c) => (
             <div
               key={c.id}
@@ -451,6 +494,7 @@ export default function Dashboard() {
                   color: "#334155",
                   fontFamily: "'DM Sans', sans-serif",
                   fontSize: 12,
+                  whiteSpace: "nowrap",
                 }}
               >
                 {a.time}
@@ -472,7 +516,7 @@ const styles = {
   },
   sidebar: {
     width: 240,
-    background: "rgba(15,23,42,0.9)",
+    background: "rgba(15,23,42,0.95)",
     borderRight: "1px solid rgba(255,255,255,0.06)",
     backdropFilter: "blur(20px)",
     display: "flex",
@@ -505,10 +549,7 @@ const styles = {
     fontSize: 16,
     color: "#f1f5f9",
   },
-  sideNav: {
-    flex: 1,
-    padding: "0 12px",
-  },
+  sideNav: { flex: 1, padding: "0 12px" },
   navItem: {
     display: "flex",
     alignItems: "center",
@@ -543,23 +584,14 @@ const styles = {
     fontFamily: "'Syne', sans-serif",
     flexShrink: 0,
   },
-  main: {
-    flex: 1,
-    marginLeft: 240,
-    padding: "32px 40px",
-    minHeight: "100vh",
-  },
+  main: { flex: 1, marginLeft: 240, padding: "32px 40px", minHeight: "100vh" },
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 28,
   },
-  greetingSmall: {
-    color: "#64748b",
-    fontSize: 13,
-    marginBottom: 4,
-  },
+  greetingSmall: { color: "#64748b", fontSize: 13, marginBottom: 4 },
   greetingName: {
     color: "#f1f5f9",
     fontFamily: "'Syne', sans-serif",
@@ -585,7 +617,6 @@ const styles = {
     borderRadius: "50%",
     background: "#34d399",
     boxShadow: "0 0 6px #34d399",
-    animation: "pulseRing 2s infinite",
   },
   welcomeCard: {
     background:
@@ -598,11 +629,7 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
   },
-  welcomeLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: 20,
-  },
+  welcomeLeft: { display: "flex", alignItems: "center", gap: 20 },
   avatar: {
     width: 54,
     height: 54,
@@ -617,6 +644,7 @@ const styles = {
     fontFamily: "'Syne', sans-serif",
     boxShadow: "0 0 20px rgba(14,165,233,0.4)",
     border: "2px solid rgba(14,165,233,0.3)",
+    flexShrink: 0,
   },
   verifiedBadge: {
     display: "flex",
@@ -629,6 +657,7 @@ const styles = {
     color: "#34d399",
     fontSize: 13,
     fontFamily: "'DM Sans', sans-serif",
+    whiteSpace: "nowrap",
   },
   cardGrid: {
     display: "grid",

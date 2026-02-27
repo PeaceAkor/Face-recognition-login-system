@@ -4,14 +4,13 @@ import axios from "axios";
 
 export default function FaceRegister() {
   const videoRef = useRef(null);
-
   const [matricNumber, setMatricNumber] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("initializing");
   const [statusMsg, setStatusMsg] = useState("Loading face models...");
   const [cameraReady, setCameraReady] = useState(false);
-  const [step, setStep] = useState(1); // 1 = details, 2 = camera
+  const [step, setStep] = useState(1);
 
   useEffect(() => {
     const init = async () => {
@@ -54,28 +53,23 @@ export default function FaceRegister() {
     setLoading(true);
     setStatus("scanning");
     setStatusMsg("Scanning face...");
-
     try {
       const detection = await faceapi
         .detectSingleFace(videoRef.current)
         .withFaceLandmarks()
         .withFaceDescriptor();
-
       if (!detection) {
         setStatus("error");
         setStatusMsg("No face detected — adjust position");
         setLoading(false);
         return;
       }
-
       setStatusMsg("Encrypting & saving biometric data...");
-
       await axios.post(`${API_URL}/api/register-face`, {
         name: name.trim(),
         matricNumber: matricNumber.trim(),
         faceDescriptor: Array.from(detection.descriptor),
       });
-
       setStatus("success");
       setStatusMsg("Face registered successfully!");
       setName("");
@@ -102,66 +96,32 @@ export default function FaceRegister() {
     <div style={s.root}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         .reg-input {
-          width: 100%;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 12px;
-          padding: 14px 18px;
-          color: #f1f5f9;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 15px;
-          outline: none;
-          transition: all 0.25s;
+          width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px; padding: 14px 18px; color: #f1f5f9;
+          font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: all 0.25s;
         }
         .reg-input::placeholder { color: #334155; }
-        .reg-input:focus {
-          border-color: rgba(99,102,241,0.5);
-          background: rgba(99,102,241,0.05);
-          box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
-        }
+        .reg-input:focus { border-color: rgba(99,102,241,0.5); background: rgba(99,102,241,0.05); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
 
         .primary-btn {
-          width: 100%;
-          border: none;
-          border-radius: 14px;
-          padding: 16px;
-          color: #fff;
-          font-family: 'Syne', sans-serif;
-          font-weight: 700;
-          font-size: 15px;
-          cursor: pointer;
-          transition: all 0.3s;
-          letter-spacing: 0.4px;
-          position: relative;
-          overflow: hidden;
+          width: 100%; border: none; border-radius: 14px; padding: 16px; color: #fff;
+          font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; cursor: pointer;
+          transition: all 0.3s; letter-spacing: 0.4px; position: relative; overflow: hidden;
         }
         .primary-btn:disabled { opacity: 0.45; cursor: not-allowed; }
         .primary-btn:not(:disabled):hover { transform: translateY(-2px); }
 
         .back-btn {
-          background: transparent;
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 12px;
-          padding: 13px;
-          color: #475569;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 14px;
-          cursor: pointer;
-          transition: all 0.2s;
-          display: flex; align-items: center; gap: 8px;
-          justify-content: center;
+          background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+          padding: 13px; color: #475569; font-family: 'DM Sans', sans-serif; font-size: 14px;
+          cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%;
         }
         .back-btn:hover { border-color: rgba(255,255,255,0.2); color: #94a3b8; }
 
-        .step-dot {
-          width: 8px; height: 8px;
-          border-radius: 50%;
-          transition: all 0.3s;
-        }
-
+        .step-dot { width: 8px; height: 8px; border-radius: 50%; transition: all 0.3s; }
         .corner { position: absolute; width: 22px; height: 22px; border-color: var(--cc); border-style: solid; transition: all 0.3s; }
         .tl { top: 0; left: 0; border-width: 2px 0 0 2px; border-radius: 6px 0 0 0; }
         .tr { top: 0; right: 0; border-width: 2px 2px 0 0; border-radius: 0 6px 0 0; }
@@ -170,347 +130,259 @@ export default function FaceRegister() {
 
         @keyframes scanLine { 0%,100% { top: 8%; opacity: 1; } 50% { top: 88%; opacity: 0.4; } }
         .scan-anim { animation: scanLine 2.5s ease-in-out infinite; }
-
         @keyframes spin { to { transform: rotate(360deg); } }
         .spinner { animation: spin 1s linear infinite; }
-
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
         .pulse { animation: pulse 1.5s ease-in-out infinite; }
-
         @keyframes fadeSlide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeSlide 0.5s ease forwards; }
-
         @keyframes successPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .success-pop { animation: successPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275) forwards; }
+
+        /* ── Responsive ── */
+        @media (max-width: 860px) {
+          .reg-layout { flex-direction: column !important; }
+          .reg-left-panel { width: 100% !important; padding: 24px 20px !important; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important; flex-direction: row !important; align-items: center !important; flex-wrap: wrap !important; gap: 16px !important; }
+          .reg-left-title { font-size: 28px !important; }
+          .reg-steps-wrap { display: none !important; }
+          .reg-left-desc { display: none !important; }
+          .reg-left-footer { display: none !important; }
+          .reg-security { display: none !important; }
+          .reg-right-panel { padding: 24px 16px !important; }
+        }
+
+        @media (max-width: 500px) {
+          .reg-card { padding: 24px 16px !important; border-radius: 16px !important; }
+          .reg-card-title { font-size: 22px !important; }
+          .reg-left-title { font-size: 22px !important; }
+        }
       `}</style>
 
-      {/* BG orbs */}
       <div style={s.orb1} />
       <div style={s.orb2} />
 
-      {/* Left panel */}
-      <div style={s.leftPanel} className="fade-in">
-        <div style={s.brandLogo}>
-          <div style={s.logoDot} />
-          <span style={s.logoText}>SchoolPortal</span>
-        </div>
-
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-          }}
-        >
-          <div style={s.leftTag}>NEW STUDENT SETUP</div>
-          <h1 style={s.leftTitle}>
-            Register
-            <br />
-            <span style={s.leftAccent}>Your Face</span>
-          </h1>
-          <p style={s.leftDesc}>
-            Set up your biometric profile once. After that, logging in is as
-            simple as looking at the camera.
-          </p>
-
-          {/* Step progress */}
-          <div style={s.stepsWrap}>
-            {[
-              { n: 1, label: "Your Details", sub: "Name & matric number" },
-              { n: 2, label: "Face Capture", sub: "Scan & register face" },
-            ].map((st) => (
-              <div key={st.n} style={s.stepRow}>
-                <div
-                  style={{
-                    ...s.stepNum,
-                    background:
-                      step >= st.n
-                        ? "linear-gradient(135deg, #6366f1, #0ea5e9)"
-                        : "rgba(255,255,255,0.05)",
-                    color: step >= st.n ? "#fff" : "#334155",
-                    boxShadow:
-                      step === st.n ? "0 0 16px rgba(99,102,241,0.5)" : "none",
-                  }}
-                >
-                  {step > st.n ? (
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  ) : (
-                    st.n
-                  )}
-                </div>
-                <div>
-                  <div
-                    style={{
-                      ...s.stepLabel,
-                      color: step >= st.n ? "#e2e8f0" : "#334155",
-                    }}
-                  >
-                    {st.label}
-                  </div>
-                  <div style={s.stepSub}>{st.sub}</div>
-                </div>
-                {st.n < 2 && (
-                  <div
-                    style={{
-                      ...s.stepLine,
-                      background:
-                        step > st.n
-                          ? "rgba(99,102,241,0.5)"
-                          : "rgba(255,255,255,0.05)",
-                    }}
-                  />
-                )}
-              </div>
-            ))}
+      <div className="reg-layout" style={s.layout}>
+        {/* Left panel */}
+        <div className="reg-left-panel fade-in" style={s.leftPanel}>
+          <div style={s.brandLogo}>
+            <div style={s.logoDot} />
+            <span style={s.logoText}>SchoolPortal</span>
           </div>
-
-          <div style={s.securityNote}>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#475569"
-              strokeWidth="2"
-              strokeLinecap="round"
-            >
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            <span
-              style={{
-                color: "#334155",
-                fontSize: 13,
-                fontFamily: "'DM Sans', sans-serif",
-              }}
-            >
-              Data encrypted with AES-256 before storage
-            </span>
-          </div>
-        </div>
-
-        <p style={s.leftFooter}>© 2025 SchoolPortal · All rights reserved</p>
-      </div>
-
-      {/* Right panel */}
-      <div style={s.rightPanel}>
-        <div style={s.card}>
-          {/* Step indicator dots */}
           <div
             style={{
+              flex: 1,
               display: "flex",
+              flexDirection: "column",
               justifyContent: "center",
-              gap: 8,
-              marginBottom: 28,
             }}
           >
-            {[1, 2].map((n) => (
-              <div
-                key={n}
-                className="step-dot"
-                style={{
-                  background:
-                    step === n
-                      ? "#6366f1"
-                      : step > n
-                        ? "#34d399"
-                        : "rgba(255,255,255,0.08)",
-                  width: step === n ? 24 : 8,
-                  borderRadius: 100,
-                }}
-              />
-            ))}
-          </div>
-
-          {/* ── STEP 1: Details ── */}
-          {step === 1 && (
-            <div className="fade-in">
-              <div style={{ textAlign: "center", marginBottom: 28 }}>
-                <h2 style={s.cardTitle}>Create Account</h2>
-                <p style={s.cardSub}>Enter your student information</p>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 18,
-                  marginBottom: 28,
-                }}
-              >
-                <div>
-                  <label style={s.label}>Full Name</label>
-                  <input
-                    className="reg-input"
-                    type="text"
-                    placeholder="e.g. Amaka Osei"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label style={s.label}>Matric Number</label>
-                  <input
-                    className="reg-input"
-                    type="text"
-                    placeholder="e.g. BHU/23/05/001"
-                    value={matricNumber}
-                    onChange={(e) => setMatricNumber(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleNext()}
-                  />
-                </div>
-              </div>
-
-              {status === "error" && (
-                <div style={s.errorBanner}>
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#f87171"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                  {statusMsg}
-                </div>
-              )}
-
-              <button
-                className="primary-btn"
-                onClick={handleNext}
-                style={{
-                  background: "linear-gradient(135deg, #6366f1, #0ea5e9)",
-                  boxShadow: "0 0 28px rgba(99,102,241,0.35)",
-                }}
-              >
-                Continue to Face Capture →
-              </button>
-
-              <p style={s.footer}>
-                Already registered?{" "}
-                <a href="/login" style={s.footerLink}>
-                  Login here
-                </a>
-              </p>
-            </div>
-          )}
-
-          {/* ── STEP 2: Camera ── */}
-          {step === 2 && (
-            <div className="fade-in">
-              <div style={{ textAlign: "center", marginBottom: 20 }}>
-                <div style={s.cardBadge}>
+            <div style={s.leftTag}>NEW STUDENT SETUP</div>
+            <h1 className="reg-left-title" style={s.leftTitle}>
+              Register
+              <br />
+              <span style={s.leftAccent}>Your Face</span>
+            </h1>
+            <p className="reg-left-desc" style={s.leftDesc}>
+              Set up your biometric profile once. After that, logging in is as
+              simple as looking at the camera.
+            </p>
+            <div className="reg-steps-wrap" style={s.stepsWrap}>
+              {[
+                { n: 1, label: "Your Details", sub: "Name & matric number" },
+                { n: 2, label: "Face Capture", sub: "Scan & register face" },
+              ].map((st) => (
+                <div key={st.n} style={s.stepRow}>
                   <div
                     style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: "50%",
-                      background: sc,
-                      boxShadow: `0 0 6px ${sc}`,
+                      ...s.stepNum,
+                      background:
+                        step >= st.n
+                          ? "linear-gradient(135deg, #6366f1, #0ea5e9)"
+                          : "rgba(255,255,255,0.05)",
+                      color: step >= st.n ? "#fff" : "#334155",
+                      boxShadow:
+                        step === st.n
+                          ? "0 0 16px rgba(99,102,241,0.5)"
+                          : "none",
                     }}
-                    className={
-                      status === "idle" || status === "scanning" ? "pulse" : ""
-                    }
-                  />
-                  {cameraReady ? "Camera Ready" : "Initializing..."}
-                </div>
-                <h2 style={{ ...s.cardTitle, fontSize: 24 }}>
-                  Hi, {name.split(" ")[0]} 👋
-                </h2>
-                <p style={s.cardSub}>Look straight at the camera</p>
-              </div>
-
-              {/* Camera */}
-              <div style={{ marginBottom: 16 }}>
-                <div
-                  style={{
-                    ...s.cameraWrap,
-                    borderColor: `${sc}40`,
-                    boxShadow: `0 0 30px ${sc}15`,
-                  }}
-                >
-                  {["tl", "tr", "bl", "br"].map((c) => (
+                  >
+                    {step > st.n ? (
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : (
+                      st.n
+                    )}
+                  </div>
+                  <div>
                     <div
-                      key={c}
-                      className={`corner ${c}`}
-                      style={{ "--cc": sc }}
-                    />
-                  ))}
-
-                  <video ref={videoRef} autoPlay muted style={s.video} />
-
-                  {status === "scanning" && (
-                    <div
-                      className="scan-anim"
                       style={{
-                        position: "absolute",
-                        left: 0,
-                        right: 0,
-                        height: 2,
-                        background: `linear-gradient(90deg, transparent, ${sc}, transparent)`,
-                        boxShadow: `0 0 10px ${sc}`,
-                        zIndex: 5,
+                        ...s.stepLabel,
+                        color: step >= st.n ? "#e2e8f0" : "#334155",
+                      }}
+                    >
+                      {st.label}
+                    </div>
+                    <div style={s.stepSub}>{st.sub}</div>
+                  </div>
+                  {st.n < 2 && (
+                    <div
+                      style={{
+                        ...s.stepLine,
+                        background:
+                          step > st.n
+                            ? "rgba(99,102,241,0.5)"
+                            : "rgba(255,255,255,0.05)",
                       }}
                     />
                   )}
-
-                  {status === "success" && (
-                    <div style={s.successOverlay} className="success-pop">
-                      <div style={s.successCircle}>
-                        <svg
-                          width="36"
-                          height="36"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="#34d399"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                        >
-                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                          <polyline points="22 4 12 14.01 9 11.01" />
-                        </svg>
-                      </div>
-                    </div>
-                  )}
                 </div>
+              ))}
+            </div>
+            <div className="reg-security" style={s.securityNote}>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#475569"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              <span
+                style={{
+                  color: "#334155",
+                  fontSize: 13,
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+              >
+                Data encrypted with AES-256 before storage
+              </span>
+            </div>
+          </div>
+          <p className="reg-left-footer" style={s.leftFooter}>
+            © 2025 SchoolPortal · All rights reserved
+          </p>
+        </div>
 
-                {/* Status bar */}
+        {/* Right panel */}
+        <div className="reg-right-panel" style={s.rightPanel}>
+          <div className="reg-card" style={s.card}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 8,
+                marginBottom: 28,
+              }}
+            >
+              {[1, 2].map((n) => (
+                <div
+                  key={n}
+                  className="step-dot"
+                  style={{
+                    background:
+                      step === n
+                        ? "#6366f1"
+                        : step > n
+                          ? "#34d399"
+                          : "rgba(255,255,255,0.08)",
+                    width: step === n ? 24 : 8,
+                    borderRadius: 100,
+                  }}
+                />
+              ))}
+            </div>
+
+            {step === 1 && (
+              <div className="fade-in">
+                <div style={{ textAlign: "center", marginBottom: 28 }}>
+                  <h2 className="reg-card-title" style={s.cardTitle}>
+                    Create Account
+                  </h2>
+                  <p style={s.cardSub}>Enter your student information</p>
+                </div>
                 <div
                   style={{
-                    ...s.statusBar,
-                    borderColor: `${sc}30`,
-                    background: `${sc}0a`,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 18,
+                    marginBottom: 28,
                   }}
                 >
-                  {loading ? (
+                  <div>
+                    <label style={s.label}>Full Name</label>
+                    <input
+                      className="reg-input"
+                      type="text"
+                      placeholder="e.g. Amaka Osei"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label style={s.label}>Matric Number</label>
+                    <input
+                      className="reg-input"
+                      type="text"
+                      placeholder="e.g. BHU/23/05/001"
+                      value={matricNumber}
+                      onChange={(e) => setMatricNumber(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleNext()}
+                    />
+                  </div>
+                </div>
+                {status === "error" && (
+                  <div style={s.errorBanner}>
                     <svg
-                      className="spinner"
-                      width="12"
-                      height="12"
+                      width="14"
+                      height="14"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke={sc}
-                      strokeWidth="3"
+                      stroke="#f87171"
+                      strokeWidth="2"
+                      strokeLinecap="round"
                     >
-                      <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
-                      <path d="M12 2a10 10 0 0 1 10 10" stroke={sc} />
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
-                  ) : (
+                    {statusMsg}
+                  </div>
+                )}
+                <button
+                  className="primary-btn"
+                  onClick={handleNext}
+                  style={{
+                    background: "linear-gradient(135deg, #6366f1, #0ea5e9)",
+                    boxShadow: "0 0 28px rgba(99,102,241,0.35)",
+                  }}
+                >
+                  Continue to Face Capture →
+                </button>
+                <p style={s.footer}>
+                  Already registered?{" "}
+                  <a href="/login" style={s.footerLink}>
+                    Login here
+                  </a>
+                </p>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="fade-in">
+                <div style={{ textAlign: "center", marginBottom: 20 }}>
+                  <div style={s.cardBadge}>
                     <div
                       style={{
                         width: 7,
@@ -525,53 +397,143 @@ export default function FaceRegister() {
                           : ""
                       }
                     />
-                  )}
-                  <span
+                    {cameraReady ? "Camera Ready" : "Initializing..."}
+                  </div>
+                  <h2 style={{ ...s.cardTitle, fontSize: 24 }}>
+                    Hi, {name.split(" ")[0]} 👋
+                  </h2>
+                  <p style={s.cardSub}>Look straight at the camera</p>
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <div
                     style={{
-                      color: sc,
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontSize: 13,
+                      ...s.cameraWrap,
+                      borderColor: `${sc}40`,
+                      boxShadow: `0 0 30px ${sc}15`,
                     }}
                   >
-                    {statusMsg}
-                  </span>
+                    {["tl", "tr", "bl", "br"].map((c) => (
+                      <div
+                        key={c}
+                        className={`corner ${c}`}
+                        style={{ "--cc": sc }}
+                      />
+                    ))}
+                    <video ref={videoRef} autoPlay muted style={s.video} />
+                    {status === "scanning" && (
+                      <div
+                        className="scan-anim"
+                        style={{
+                          position: "absolute",
+                          left: 0,
+                          right: 0,
+                          height: 2,
+                          background: `linear-gradient(90deg, transparent, ${sc}, transparent)`,
+                          boxShadow: `0 0 10px ${sc}`,
+                          zIndex: 5,
+                        }}
+                      />
+                    )}
+                    {status === "success" && (
+                      <div style={s.successOverlay} className="success-pop">
+                        <div style={s.successCircle}>
+                          <svg
+                            width="36"
+                            height="36"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#34d399"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                          >
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      ...s.statusBar,
+                      borderColor: `${sc}30`,
+                      background: `${sc}0a`,
+                    }}
+                  >
+                    {loading ? (
+                      <svg
+                        className="spinner"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke={sc}
+                        strokeWidth="3"
+                      >
+                        <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
+                        <path d="M12 2a10 10 0 0 1 10 10" stroke={sc} />
+                      </svg>
+                    ) : (
+                      <div
+                        style={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: "50%",
+                          background: sc,
+                          boxShadow: `0 0 6px ${sc}`,
+                        }}
+                        className={
+                          status === "idle" || status === "scanning"
+                            ? "pulse"
+                            : ""
+                        }
+                      />
+                    )}
+                    <span
+                      style={{
+                        color: sc,
+                        fontFamily: "'DM Sans', sans-serif",
+                        fontSize: 13,
+                      }}
+                    >
+                      {statusMsg}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 10 }}
+                >
+                  <button
+                    className="primary-btn"
+                    onClick={registerFace}
+                    disabled={loading || !cameraReady || status === "success"}
+                    style={{
+                      background: "linear-gradient(135deg, #6366f1, #0ea5e9)",
+                      boxShadow: "0 0 28px rgba(99,102,241,0.35)",
+                    }}
+                  >
+                    <span>
+                      {loading
+                        ? "Registering..."
+                        : status === "success"
+                          ? "Registered ✓"
+                          : "Register Face"}
+                    </span>
+                  </button>
+                  <button
+                    className="back-btn"
+                    onClick={() => {
+                      setStep(1);
+                      setStatus("idle");
+                      setStatusMsg("Position your face clearly in the frame");
+                    }}
+                  >
+                    ← Back to Details
+                  </button>
                 </div>
               </div>
-
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 10 }}
-              >
-                <button
-                  className="primary-btn"
-                  onClick={registerFace}
-                  disabled={loading || !cameraReady || status === "success"}
-                  style={{
-                    background: "linear-gradient(135deg, #6366f1, #0ea5e9)",
-                    boxShadow: "0 0 28px rgba(99,102,241,0.35)",
-                  }}
-                >
-                  <span>
-                    {loading
-                      ? "Registering..."
-                      : status === "success"
-                        ? "Registered ✓"
-                        : "Register Face"}
-                  </span>
-                </button>
-
-                <button
-                  className="back-btn"
-                  onClick={() => {
-                    setStep(1);
-                    setStatus("idle");
-                    setStatusMsg("Position your face clearly in the frame");
-                  }}
-                >
-                  ← Back to Details
-                </button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -582,7 +544,6 @@ const s = {
   root: {
     minHeight: "100vh",
     background: "#030712",
-    display: "flex",
     position: "relative",
     overflow: "hidden",
   },
@@ -608,6 +569,7 @@ const s = {
       "radial-gradient(circle, rgba(14,165,233,0.07) 0%, transparent 70%)",
     pointerEvents: "none",
   },
+  layout: { display: "flex", minHeight: "100vh" },
   leftPanel: {
     width: "42%",
     padding: "48px 56px",

@@ -10,7 +10,7 @@ export default function FaceLogin() {
 
   const [matricNumber, setMatricNumber] = useState("");
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("idle"); // idle | loading | scanning | success | error
+  const [status, setStatus] = useState("idle");
   const [statusMsg, setStatusMsg] = useState("Loading face models...");
   const [modelsReady, setModelsReady] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
@@ -24,7 +24,6 @@ export default function FaceLogin() {
           faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
         ]);
         setModelsReady(true);
-
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 640, height: 480 },
         });
@@ -52,27 +51,22 @@ export default function FaceLogin() {
     setLoading(true);
     setStatus("scanning");
     setStatusMsg("Scanning face...");
-
     try {
       const detection = await faceapi
         .detectSingleFace(videoRef.current)
         .withFaceLandmarks()
         .withFaceDescriptor();
-
       if (!detection) {
         setStatusMsg("No face detected — adjust position");
         setStatus("error");
         setLoading(false);
         return;
       }
-
       setStatusMsg("Verifying identity...");
-
       const res = await axios.post(`${API_URL}/api/login-face`, {
         matricNumber: matricNumber.trim(),
         faceDescriptor: Array.from(detection.descriptor),
       });
-
       if (res.data.success) {
         localStorage.setItem("user", JSON.stringify(res.data.user));
         setStatusMsg("Identity confirmed");
@@ -97,60 +91,29 @@ export default function FaceLogin() {
     success: "#34d399",
     error: "#f87171",
   };
-
   const statusColor = statusColors[status] || "#38bdf8";
 
   return (
     <div style={s.root}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         .login-input {
-          width: 100%;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 12px;
-          padding: 14px 18px;
-          color: #f1f5f9;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 15px;
-          outline: none;
-          transition: all 0.25s;
-          letter-spacing: 0.5px;
+          width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px; padding: 14px 18px; color: #f1f5f9;
+          font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none; transition: all 0.25s; letter-spacing: 0.5px;
         }
         .login-input::placeholder { color: #334155; }
-        .login-input:focus {
-          border-color: rgba(56,189,248,0.5);
-          background: rgba(56,189,248,0.05);
-          box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
-        }
+        .login-input:focus { border-color: rgba(56,189,248,0.5); background: rgba(56,189,248,0.05); box-shadow: 0 0 0 3px rgba(56,189,248,0.1); }
 
         .scan-btn {
-          width: 100%;
-          background: linear-gradient(135deg, #0ea5e9, #6366f1);
-          border: none;
-          border-radius: 14px;
-          padding: 16px;
-          color: #fff;
-          font-family: 'Syne', sans-serif;
-          font-weight: 700;
-          font-size: 15px;
-          cursor: pointer;
-          transition: all 0.3s;
-          box-shadow: 0 0 28px rgba(14,165,233,0.35);
-          letter-spacing: 0.4px;
-          position: relative;
-          overflow: hidden;
+          width: 100%; background: linear-gradient(135deg, #0ea5e9, #6366f1); border: none; border-radius: 14px;
+          padding: 16px; color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px;
+          cursor: pointer; transition: all 0.3s; box-shadow: 0 0 28px rgba(14,165,233,0.35); letter-spacing: 0.4px;
+          position: relative; overflow: hidden;
         }
-        .scan-btn::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, #38bdf8, #818cf8);
-          opacity: 0;
-          transition: opacity 0.3s;
-        }
+        .scan-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, #38bdf8, #818cf8); opacity: 0; transition: opacity 0.3s; }
         .scan-btn:hover:not(:disabled)::before { opacity: 1; }
         .scan-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 0 40px rgba(14,165,233,0.5); }
         .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -162,242 +125,234 @@ export default function FaceLogin() {
         .bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; border-radius: 0 0 0 6px; }
         .br { bottom: 0; right: 0; border-width: 0 2px 2px 0; border-radius: 0 0 6px 0; }
 
-        @keyframes scanLine {
-          0%, 100% { top: 8%; opacity: 1; }
-          50% { top: 88%; opacity: 0.5; }
-        }
+        @keyframes scanLine { 0%, 100% { top: 8%; opacity: 1; } 50% { top: 88%; opacity: 0.5; } }
         .scan-line-anim { animation: scanLine 2.5s ease-in-out infinite; }
-
         @keyframes spin { to { transform: rotate(360deg); } }
         .spinner { animation: spin 1s linear infinite; }
-
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
         .pulse { animation: pulse 1.5s ease-in-out infinite; }
-
-        @keyframes fadeSlide {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeSlide { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeSlide 0.7s ease forwards; }
-
-        @keyframes successPulse {
-          0% { box-shadow: 0 0 0 0 rgba(52,211,153,0.5); }
-          70% { box-shadow: 0 0 0 20px rgba(52,211,153,0); }
-          100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
-        }
+        @keyframes successPulse { 0% { box-shadow: 0 0 0 0 rgba(52,211,153,0.5); } 70% { box-shadow: 0 0 0 20px rgba(52,211,153,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); } }
         .success-ring { animation: successPulse 1s ease-out; }
+
+        /* ── Responsive ── */
+        @media (max-width: 860px) {
+          .login-layout { flex-direction: column !important; }
+          .login-left-panel { width: 100% !important; padding: 28px 24px !important; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important; flex-direction: row !important; align-items: center !important; gap: 20px !important; min-height: unset !important; }
+          .login-left-content { flex: 1; }
+          .login-left-title { font-size: 28px !important; margin-bottom: 8px !important; }
+          .login-left-desc { display: none !important; }
+          .login-left-features { display: none !important; }
+          .login-left-footer { display: none !important; }
+          .login-right-panel { padding: 24px 16px !important; }
+        }
+
+        @media (max-width: 500px) {
+          .login-left-panel { padding: 20px 16px !important; }
+          .login-left-title { font-size: 22px !important; }
+          .login-card { padding: 24px 16px !important; border-radius: 16px !important; }
+          .login-card-title { font-size: 24px !important; }
+        }
       `}</style>
 
-      {/* Background orbs */}
       <div style={s.orb1} />
       <div style={s.orb2} />
 
-      {/* Left panel — branding */}
-      <div style={s.leftPanel} className="fade-in">
-        <div style={s.brandLogo}>
-          <div style={s.logoDot} />
-          <span style={s.logoText}>SchoolPortal</span>
-        </div>
-
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-          }}
-        >
-          <div style={s.leftTag}>BIOMETRIC AUTH</div>
-          <h1 style={s.leftTitle}>
-            Secure
-            <br />
-            <span style={s.leftAccent}>Face Login</span>
-          </h1>
-          <p style={s.leftDesc}>
-            No passwords. No guessing. Just look at the camera and let our
-            system verify your identity in under a second.
-          </p>
-
-          <div style={s.featureList}>
-            {[
-              { icon: "🔬", label: "128-point facial mapping" },
-              { icon: "🔐", label: "AES-256 encrypted data" },
-              { icon: "⚡", label: "Sub-second authentication" },
-            ].map((f) => (
-              <div key={f.label} style={s.featureItem}>
-                <span style={{ fontSize: 18 }}>{f.icon}</span>
-                <span style={s.featureLabel}>{f.label}</span>
-              </div>
-            ))}
+      <div className="login-layout" style={s.layout}>
+        {/* Left panel */}
+        <div className="login-left-panel fade-in" style={s.leftPanel}>
+          <div style={s.brandLogo}>
+            <div style={s.logoDot} />
+            <span style={s.logoText}>SchoolPortal</span>
           </div>
+          <div
+            className="login-left-content"
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <div style={s.leftTag}>BIOMETRIC AUTH</div>
+            <h1 className="login-left-title" style={s.leftTitle}>
+              Secure
+              <br />
+              <span style={s.leftAccent}>Face Login</span>
+            </h1>
+            <p className="login-left-desc" style={s.leftDesc}>
+              No passwords. No guessing. Just look at the camera and let our
+              system verify your identity in under a second.
+            </p>
+            <div className="login-left-features" style={s.featureList}>
+              {[
+                { icon: "🔬", label: "128-point facial mapping" },
+                { icon: "🔐", label: "AES-256 encrypted data" },
+                { icon: "⚡", label: "Sub-second authentication" },
+              ].map((f) => (
+                <div key={f.label} style={s.featureItem}>
+                  <span style={{ fontSize: 18 }}>{f.icon}</span>
+                  <span style={s.featureLabel}>{f.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="login-left-footer" style={s.leftFooter}>
+            © 2025 SchoolPortal · All rights reserved
+          </p>
         </div>
 
-        <p style={s.leftFooter}>© 2025 SchoolPortal · All rights reserved</p>
-      </div>
+        {/* Right panel */}
+        <div className="login-right-panel" style={s.rightPanel}>
+          <div className="login-card fade-in" style={s.card}>
+            <div style={{ textAlign: "center", marginBottom: 32 }}>
+              <div style={s.cardBadge}>
+                <div
+                  style={{
+                    ...s.badgeDot,
+                    background: statusColor,
+                    boxShadow: `0 0 8px ${statusColor}`,
+                  }}
+                />
+                {cameraReady ? "Camera Ready" : "Initializing..."}
+              </div>
+              <h2 className="login-card-title" style={s.cardTitle}>
+                Welcome Back
+              </h2>
+              <p style={s.cardSub}>Authenticate with your face</p>
+            </div>
 
-      {/* Right panel — login form */}
-      <div style={s.rightPanel}>
-        <div style={s.card} className="fade-in">
-          {/* Header */}
-          <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <div style={s.cardBadge}>
+            <div style={{ marginBottom: 24 }}>
+              <label style={s.label}>Matric Number</label>
+              <input
+                className="login-input"
+                type="text"
+                placeholder="e.g. BHU/23/05/001"
+                value={matricNumber}
+                onChange={(e) => setMatricNumber(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !loading && login()}
+              />
+            </div>
+
+            <div style={{ position: "relative", marginBottom: 20 }}>
               <div
                 style={{
-                  ...s.badgeDot,
-                  background: statusColor,
-                  boxShadow: `0 0 8px ${statusColor}`,
+                  ...s.cameraWrap,
+                  borderColor: `${statusColor}40`,
+                  boxShadow: `0 0 30px ${statusColor}15`,
                 }}
-              />
-              {cameraReady ? "Camera Ready" : "Initializing..."}
-            </div>
-            <h2 style={s.cardTitle}>Welcome Back</h2>
-            <p style={s.cardSub}>Authenticate with your face</p>
-          </div>
-
-          {/* Matric input */}
-          <div style={{ marginBottom: 24 }}>
-            <label style={s.label}>Matric Number</label>
-            <input
-              className="login-input"
-              type="text"
-              placeholder="e.g. BHU/23/05/001"
-              value={matricNumber}
-              onChange={(e) => setMatricNumber(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !loading && login()}
-            />
-          </div>
-
-          {/* Camera feed */}
-          <div style={{ position: "relative", marginBottom: 20 }}>
-            <div
-              style={{
-                ...s.cameraWrap,
-                borderColor: `${statusColor}40`,
-                boxShadow: `0 0 30px ${statusColor}15`,
-              }}
-              className={status === "success" ? "success-ring" : ""}
-            >
-              {/* Corner brackets */}
-              {["tl", "tr", "bl", "br"].map((c) => (
-                <div
-                  key={c}
-                  className={`corner ${c}`}
-                  style={{ "--cc": statusColor }}
-                />
-              ))}
-
-              <video ref={videoRef} autoPlay muted style={s.video} />
-
-              {/* Scan line (only when scanning) */}
-              {status === "scanning" && (
-                <div
-                  className="scan-line-anim"
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    right: 0,
-                    height: 2,
-                    background: `linear-gradient(90deg, transparent, ${statusColor}, transparent)`,
-                    boxShadow: `0 0 10px ${statusColor}`,
-                    zIndex: 5,
-                  }}
-                />
-              )}
-
-              {/* Success overlay */}
-              {status === "success" && (
-                <div style={s.successOverlay}>
-                  <svg
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#34d399"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  >
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                    <polyline points="22 4 12 14.01 9 11.01" />
-                  </svg>
-                </div>
-              )}
-
-              {/* Loading spinner overlay */}
-              {loading && status !== "scanning" && (
-                <div style={s.loadingOverlay}>
+                className={status === "success" ? "success-ring" : ""}
+              >
+                {["tl", "tr", "bl", "br"].map((c) => (
+                  <div
+                    key={c}
+                    className={`corner ${c}`}
+                    style={{ "--cc": statusColor }}
+                  />
+                ))}
+                <video ref={videoRef} autoPlay muted style={s.video} />
+                {status === "scanning" && (
+                  <div
+                    className="scan-line-anim"
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      height: 2,
+                      background: `linear-gradient(90deg, transparent, ${statusColor}, transparent)`,
+                      boxShadow: `0 0 10px ${statusColor}`,
+                      zIndex: 5,
+                    }}
+                  />
+                )}
+                {status === "success" && (
+                  <div style={s.successOverlay}>
+                    <svg
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#34d399"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    >
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                  </div>
+                )}
+                {loading && status !== "scanning" && (
+                  <div style={s.loadingOverlay}>
+                    <svg
+                      className="spinner"
+                      width="36"
+                      height="36"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#38bdf8"
+                      strokeWidth="2"
+                    >
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
+                      <path d="M12 2a10 10 0 0 1 10 10" stroke="#38bdf8" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div
+                style={{
+                  ...s.statusBar,
+                  borderColor: `${statusColor}30`,
+                  background: `${statusColor}0a`,
+                }}
+              >
+                {loading ? (
                   <svg
                     className="spinner"
-                    width="36"
-                    height="36"
+                    width="12"
+                    height="12"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#38bdf8"
-                    strokeWidth="2"
+                    stroke={statusColor}
+                    strokeWidth="3"
                   >
                     <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
-                    <path d="M12 2a10 10 0 0 1 10 10" stroke="#38bdf8" />
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke={statusColor} />
                   </svg>
-                </div>
-              )}
+                ) : (
+                  <div
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      background: statusColor,
+                      boxShadow: `0 0 6px ${statusColor}`,
+                    }}
+                    className={
+                      status === "idle" || status === "scanning" ? "pulse" : ""
+                    }
+                  />
+                )}
+                <span style={{ ...s.statusText, color: statusColor }}>
+                  {statusMsg}
+                </span>
+              </div>
             </div>
 
-            {/* Status bar */}
-            <div
-              style={{
-                ...s.statusBar,
-                borderColor: `${statusColor}30`,
-                background: `${statusColor}0a`,
-              }}
+            <button
+              className="scan-btn"
+              onClick={login}
+              disabled={loading || !cameraReady}
             >
-              {loading && (
-                <svg
-                  className="spinner"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke={statusColor}
-                  strokeWidth="3"
-                >
-                  <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
-                  <path d="M12 2a10 10 0 0 1 10 10" stroke={statusColor} />
-                </svg>
-              )}
-              {!loading && (
-                <div
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: "50%",
-                    background: statusColor,
-                    boxShadow: `0 0 6px ${statusColor}`,
-                  }}
-                  className={
-                    status === "idle" || status === "scanning" ? "pulse" : ""
-                  }
-                />
-              )}
-              <span style={{ ...s.statusText, color: statusColor }}>
-                {statusMsg}
-              </span>
-            </div>
+              <span>{loading ? "Authenticating..." : "Login with Face"}</span>
+            </button>
+            <p style={s.footer}>
+              Don't have an account?{" "}
+              <a href="/register" style={s.footerLink}>
+                Register here
+              </a>
+            </p>
           </div>
-
-          {/* CTA Button */}
-          <button
-            className="scan-btn"
-            onClick={login}
-            disabled={loading || !cameraReady}
-          >
-            <span>{loading ? "Authenticating..." : "Login with Face"}</span>
-          </button>
-
-          <p style={s.footer}>
-            Don't have an account?{" "}
-            <a href="/register" style={s.footerLink}>
-              Register here
-            </a>
-          </p>
         </div>
       </div>
     </div>
@@ -408,7 +363,6 @@ const s = {
   root: {
     minHeight: "100vh",
     background: "#030712",
-    display: "flex",
     position: "relative",
     overflow: "hidden",
   },
@@ -434,8 +388,7 @@ const s = {
       "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)",
     pointerEvents: "none",
   },
-
-  /* Left panel */
+  layout: { display: "flex", minHeight: "100vh" },
   leftPanel: {
     width: "42%",
     padding: "48px 56px",
@@ -445,11 +398,7 @@ const s = {
     position: "relative",
     zIndex: 2,
   },
-  brandLogo: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-  },
+  brandLogo: { display: "flex", alignItems: "center", gap: 10 },
   logoDot: {
     width: 10,
     height: 10,
@@ -492,11 +441,7 @@ const s = {
     marginBottom: 40,
     maxWidth: 360,
   },
-  featureList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 14,
-  },
+  featureList: { display: "flex", flexDirection: "column", gap: 14 },
   featureItem: {
     display: "flex",
     alignItems: "center",
@@ -517,8 +462,6 @@ const s = {
     fontSize: 12,
     marginTop: 48,
   },
-
-  /* Right panel */
   rightPanel: {
     flex: 1,
     display: "flex",
@@ -551,11 +494,7 @@ const s = {
     color: "#64748b",
     marginBottom: 16,
   },
-  badgeDot: {
-    width: 7,
-    height: 7,
-    borderRadius: "50%",
-  },
+  badgeDot: { width: 7, height: 7, borderRadius: "50%" },
   cardTitle: {
     fontFamily: "'Syne', sans-serif",
     fontWeight: 800,
@@ -634,9 +573,5 @@ const s = {
     fontSize: 13,
     marginTop: 20,
   },
-  footerLink: {
-    color: "#38bdf8",
-    textDecoration: "none",
-    fontWeight: 500,
-  },
+  footerLink: { color: "#38bdf8", textDecoration: "none", fontWeight: 500 },
 };
