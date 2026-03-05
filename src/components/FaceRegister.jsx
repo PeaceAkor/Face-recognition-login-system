@@ -12,7 +12,7 @@ export default function FaceRegister() {
   const [cameraReady, setCameraReady] = useState(false);
   const [step, setStep] = useState(1);
 
-  // Load models only on mount
+  // Load models only — no camera here
   useEffect(() => {
     const loadModels = async () => {
       try {
@@ -31,7 +31,7 @@ export default function FaceRegister() {
     };
     loadModels();
 
-    // Cleanup camera on unmount
+    // Stop camera on unmount
     return () => {
       if (videoRef.current?.srcObject) {
         videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
@@ -39,13 +39,12 @@ export default function FaceRegister() {
     };
   }, []);
 
-  // Start camera AFTER step 2 is rendered
+  // Called only after step 2 renders, so <video> is in the DOM
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480 },
       });
-      // Small delay to ensure <video> is in the DOM after setStep(2)
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -78,6 +77,16 @@ export default function FaceRegister() {
     startCamera();
   };
 
+  const handleBack = () => {
+    if (videoRef.current?.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
+    }
+    setCameraReady(false);
+    setStep(1);
+    setStatus("idle");
+    setStatusMsg("Enter your details to continue");
+  };
+
   const registerFace = async () => {
     setLoading(true);
     setStatus("scanning");
@@ -103,24 +112,13 @@ export default function FaceRegister() {
       setStatusMsg("Face registered successfully!");
       setName("");
       setMatricNumber("");
-      setTimeout(() => setStep(1), 3000);
+      setTimeout(() => handleBack(), 3000);
     } catch (err) {
       setStatus("error");
       setStatusMsg(err.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleBack = () => {
-    // Stop camera when going back
-    if (videoRef.current?.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
-    }
-    setCameraReady(false);
-    setStep(1);
-    setStatus("idle");
-    setStatusMsg("Enter your details to continue");
   };
 
   const statusColors = {
@@ -189,7 +187,6 @@ export default function FaceRegister() {
           .reg-security { display: none !important; }
           .reg-right-panel { padding: 24px 16px !important; }
         }
-
         @media (max-width: 500px) {
           .reg-card { padding: 24px 16px !important; border-radius: 16px !important; }
           .reg-card-title { font-size: 22px !important; }
@@ -201,7 +198,7 @@ export default function FaceRegister() {
       <div style={s.orb2} />
 
       <div className="reg-layout" style={s.layout}>
-        {/* Left panel */}
+        {/* ── Left panel ── */}
         <div className="reg-left-panel fade-in" style={s.leftPanel}>
           <div style={s.brandLogo}>
             <div style={s.logoDot} />
@@ -210,13 +207,11 @@ export default function FaceRegister() {
           <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
             <div style={s.leftTag}>NEW STUDENT SETUP</div>
             <h1 className="reg-left-title" style={s.leftTitle}>
-              Register
-              <br />
+              Register<br />
               <span style={s.leftAccent}>Your Face</span>
             </h1>
             <p className="reg-left-desc" style={s.leftDesc}>
-              Set up your biometric profile once. After that, logging in is as
-              simple as looking at the camera.
+              Set up your biometric profile once. After that, logging in is as simple as looking at the camera.
             </p>
             <div className="reg-steps-wrap" style={s.stepsWrap}>
               {[
@@ -224,14 +219,12 @@ export default function FaceRegister() {
                 { n: 2, label: "Face Capture", sub: "Scan & register face" },
               ].map((st) => (
                 <div key={st.n} style={s.stepRow}>
-                  <div
-                    style={{
-                      ...s.stepNum,
-                      background: step >= st.n ? "linear-gradient(135deg, #6366f1, #0ea5e9)" : "rgba(255,255,255,0.05)",
-                      color: step >= st.n ? "#fff" : "#334155",
-                      boxShadow: step === st.n ? "0 0 16px rgba(99,102,241,0.5)" : "none",
-                    }}
-                  >
+                  <div style={{
+                    ...s.stepNum,
+                    background: step >= st.n ? "linear-gradient(135deg, #6366f1, #0ea5e9)" : "rgba(255,255,255,0.05)",
+                    color: step >= st.n ? "#fff" : "#334155",
+                    boxShadow: step === st.n ? "0 0 16px rgba(99,102,241,0.5)" : "none",
+                  }}>
                     {step > st.n ? (
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
                         <polyline points="20 6 9 17 4 12" />
@@ -260,23 +253,20 @@ export default function FaceRegister() {
           <p className="reg-left-footer" style={s.leftFooter}>© 2025 SchoolPortal · All rights reserved</p>
         </div>
 
-        {/* Right panel */}
+        {/* ── Right panel ── */}
         <div className="reg-right-panel" style={s.rightPanel}>
           <div className="reg-card" style={s.card}>
             <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 28 }}>
               {[1, 2].map((n) => (
-                <div
-                  key={n}
-                  className="step-dot"
-                  style={{
-                    background: step === n ? "#6366f1" : step > n ? "#34d399" : "rgba(255,255,255,0.08)",
-                    width: step === n ? 24 : 8,
-                    borderRadius: 100,
-                  }}
-                />
+                <div key={n} className="step-dot" style={{
+                  background: step === n ? "#6366f1" : step > n ? "#34d399" : "rgba(255,255,255,0.08)",
+                  width: step === n ? 24 : 8,
+                  borderRadius: 100,
+                }} />
               ))}
             </div>
 
+            {/* Step 1 */}
             {step === 1 && (
               <div className="fade-in">
                 <div style={{ textAlign: "center", marginBottom: 28 }}>
@@ -330,6 +320,7 @@ export default function FaceRegister() {
               </div>
             )}
 
+            {/* Step 2 */}
             {step === 2 && (
               <div className="fade-in">
                 <div style={{ textAlign: "center", marginBottom: 20 }}>
@@ -343,6 +334,7 @@ export default function FaceRegister() {
                   <h2 style={{ ...s.cardTitle, fontSize: 24 }}>Hi, {name.split(" ")[0]} 👋</h2>
                   <p style={s.cardSub}>Look straight at the camera</p>
                 </div>
+
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ ...s.cameraWrap, borderColor: `${sc}40`, boxShadow: `0 0 30px ${sc}15` }}>
                     {["tl", "tr", "bl", "br"].map((c) => (
@@ -350,14 +342,11 @@ export default function FaceRegister() {
                     ))}
                     <video ref={videoRef} autoPlay muted playsInline style={s.video} />
                     {status === "scanning" && (
-                      <div
-                        className="scan-anim"
-                        style={{
-                          position: "absolute", left: 0, right: 0, height: 2,
-                          background: `linear-gradient(90deg, transparent, ${sc}, transparent)`,
-                          boxShadow: `0 0 10px ${sc}`, zIndex: 5,
-                        }}
-                      />
+                      <div className="scan-anim" style={{
+                        position: "absolute", left: 0, right: 0, height: 2,
+                        background: `linear-gradient(90deg, transparent, ${sc}, transparent)`,
+                        boxShadow: `0 0 10px ${sc}`, zIndex: 5,
+                      }} />
                     )}
                     {status === "success" && (
                       <div style={s.successOverlay} className="success-pop">
@@ -370,6 +359,7 @@ export default function FaceRegister() {
                       </div>
                     )}
                   </div>
+
                   <div style={{ ...s.statusBar, borderColor: `${sc}30`, background: `${sc}0a` }}>
                     {loading ? (
                       <svg className="spinner" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={sc} strokeWidth="3">
@@ -385,6 +375,7 @@ export default function FaceRegister() {
                     <span style={{ color: sc, fontFamily: "'DM Sans', sans-serif", fontSize: 13 }}>{statusMsg}</span>
                   </div>
                 </div>
+
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   <button
                     className="primary-btn"
@@ -392,9 +383,7 @@ export default function FaceRegister() {
                     disabled={loading || !cameraReady || status === "success"}
                     style={{ background: "linear-gradient(135deg, #6366f1, #0ea5e9)", boxShadow: "0 0 28px rgba(99,102,241,0.35)" }}
                   >
-                    <span>
-                      {loading ? "Registering..." : status === "success" ? "Registered ✓" : "Register Face"}
-                    </span>
+                    <span>{loading ? "Registering..." : status === "success" ? "Registered ✓" : "Register Face"}</span>
                   </button>
                   <button className="back-btn" onClick={handleBack}>
                     ← Back to Details
@@ -409,3 +398,39 @@ export default function FaceRegister() {
   );
 }
 
+const s = {
+  root: { minHeight: "100vh", background: "#030712", position: "relative", overflow: "hidden" },
+  orb1: { position: "fixed", top: -300, right: -200, width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)", pointerEvents: "none" },
+  orb2: { position: "fixed", bottom: -200, left: -100, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(14,165,233,0.07) 0%, transparent 70%)", pointerEvents: "none" },
+  layout: { display: "flex", minHeight: "100vh" },
+  leftPanel: { width: "42%", padding: "48px 56px", display: "flex", flexDirection: "column", borderRight: "1px solid rgba(255,255,255,0.05)", position: "relative", zIndex: 2 },
+  brandLogo: { display: "flex", alignItems: "center", gap: 10 },
+  logoDot: { width: 10, height: 10, borderRadius: "50%", background: "linear-gradient(135deg, #0ea5e9, #6366f1)", boxShadow: "0 0 10px rgba(14,165,233,0.8)" },
+  logoText: { fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 18, color: "#f1f5f9" },
+  leftTag: { fontFamily: "'DM Sans', sans-serif", fontSize: 11, letterSpacing: 3, color: "#6366f1", marginBottom: 20 },
+  leftTitle: { fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 52, color: "#f1f5f9", lineHeight: 1.1, letterSpacing: -1.5, marginBottom: 20 },
+  leftAccent: { background: "linear-gradient(135deg, #6366f1, #38bdf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" },
+  leftDesc: { fontFamily: "'DM Sans', sans-serif", color: "#475569", fontSize: 15, lineHeight: 1.8, marginBottom: 40, maxWidth: 360 },
+  stepsWrap: { display: "flex", flexDirection: "column", gap: 0, marginBottom: 32 },
+  stepRow: { display: "flex", alignItems: "flex-start", gap: 16, position: "relative", paddingBottom: 24 },
+  stepNum: { width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, transition: "all 0.3s", flexShrink: 0 },
+  stepLabel: { fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 2, transition: "color 0.3s" },
+  stepSub: { fontFamily: "'DM Sans', sans-serif", color: "#334155", fontSize: 12 },
+  stepLine: { position: "absolute", left: 17, top: 44, width: 2, height: "calc(100% - 36px)", transition: "background 0.3s" },
+  securityNote: { display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 12, padding: "12px 16px" },
+  leftFooter: { fontFamily: "'DM Sans', sans-serif", color: "#1e293b", fontSize: 12, marginTop: 48 },
+  rightPanel: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 32px", position: "relative", zIndex: 2 },
+  card: { width: "100%", maxWidth: 440, background: "rgba(15,23,42,0.7)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 24, padding: "36px 32px", backdropFilter: "blur(24px)", boxShadow: "0 24px 80px rgba(0,0,0,0.5)" },
+  cardBadge: { display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 100, padding: "5px 14px", fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#64748b", marginBottom: 12 },
+  cardTitle: { fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 30, color: "#f1f5f9", letterSpacing: -0.5, marginBottom: 6 },
+  cardSub: { fontFamily: "'DM Sans', sans-serif", color: "#475569", fontSize: 14 },
+  label: { display: "block", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#64748b", marginBottom: 8, letterSpacing: 0.3 },
+  errorBanner: { display: "flex", alignItems: "center", gap: 8, background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 10, padding: "10px 14px", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#f87171", marginBottom: 18 },
+  cameraWrap: { position: "relative", borderRadius: 16, overflow: "hidden", border: "1px solid", background: "#0a0f1a", aspectRatio: "4/3", transition: "all 0.3s" },
+  video: { width: "100%", height: "100%", objectFit: "cover", display: "block", transform: "scaleX(-1)" },
+  successOverlay: { position: "absolute", inset: 0, background: "rgba(52,211,153,0.15)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, backdropFilter: "blur(3px)" },
+  successCircle: { width: 80, height: 80, borderRadius: "50%", background: "rgba(52,211,153,0.15)", border: "2px solid rgba(52,211,153,0.4)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 40px rgba(52,211,153,0.3)" },
+  statusBar: { marginTop: 10, display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 10, border: "1px solid", transition: "all 0.3s" },
+  footer: { fontFamily: "'DM Sans', sans-serif", textAlign: "center", color: "#334155", fontSize: 13, marginTop: 20 },
+  footerLink: { color: "#6366f1", textDecoration: "none", fontWeight: 500 },
+};
