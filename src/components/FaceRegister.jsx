@@ -12,29 +12,44 @@ export default function FaceRegister() {
   const [cameraReady, setCameraReady] = useState(false);
   const [step, setStep] = useState(1);
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
-          faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
-          faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
-        ]);
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480 },
-        });
+useEffect(() => {
+  const init = async () => {
+    try {
+      await Promise.all([
+        faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
+        faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
+        faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
+      ]);
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480 },
+      });
+
+      
+      if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        setCameraReady(true);
-        setStatus("idle");
-        setStatusMsg("Position your face clearly in the frame");
-      } catch (err) {
-        console.error(err);
-        setStatus("error");
-        setStatusMsg("Camera or model load failed");
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current.play();          
+          setCameraReady(true);
+          setStatus("idle");
+          setStatusMsg("Position your face clearly in the frame");
+        };
       }
-    };
-    init();
-  }, []);
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+      setStatusMsg("Camera or model load failed");
+    }
+  };
+  init();
+
+  // ✅ Cleanup: stop tracks when component unmounts
+  return () => {
+    if (videoRef.current?.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
+    }
+  };
+}, []);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
