@@ -100,4 +100,50 @@ router.post("/login-face", async (req, res) => {
   }
 });
 
+router.post("/login-face", async (req, res) => {
+  try {
+    const { matricNumber, faceDescriptor } = req.body;
+
+    if (!matricNumber || !faceDescriptor) {
+      return res.status(400).json({ message: "Missing fields" });
+    }
+
+    const user = await User.findOne({ matricNumber });
+    if (!user) {
+      return res.status(401).json({ message: "User not registered" });
+    }
+
+    // Log what's stored to diagnose
+    console.log("Stored descriptor type:", typeof user.faceDescriptor);
+    console.log(
+      "Stored descriptor:",
+      JSON.stringify(user.faceDescriptor).slice(0, 100),
+    );
+
+    const decryptedDescriptor = decrypt(user.faceDescriptor);
+    console.log("Decrypted ok, length:", decryptedDescriptor.length);
+
+    const storedDescriptor = Array.from(decryptedDescriptor);
+    const inputDescriptor = Array.from(faceDescriptor);
+
+    const distance = euclideanDistance(storedDescriptor, inputDescriptor);
+    console.log("Face distance:", distance);
+
+    if (distance > 0.6) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Face not recognized" });
+    }
+
+    res.json({
+      success: true,
+      message: "Face login successful",
+      user: { id: user._id, name: user.name, matricNumber: user.matricNumber },
+    });
+  } catch (err) {
+    console.error("Login error FULL:", err.message, err.stack);
+    res.status(500).json({ message: "Server error", detail: err.message }); // ← shows error in browser
+  }
+});
+
 export default router;
